@@ -1,3 +1,4 @@
+from numpy import mod
 import torch
 from torch import nn
 from torch import optim
@@ -25,6 +26,7 @@ class NN(nn.Module):
         self.pool1 = nn.MaxPool2d(2)
         self.conv2 = nn.Sequential(nn.ZeroPad2d(2), nn.Conv2d(32, 64, 5), nn.ReLU())
         self.pool2 = nn.MaxPool2d(2)
+        self.drop = nn.Dropout(0.2)
         self.output = nn.Linear(64 * 8 * 8, 10)
 
     def forward(self, input):
@@ -33,6 +35,7 @@ class NN(nn.Module):
         x = self.conv2(x)
         x = self.pool2(x)
         x = torch.flatten(x, start_dim=1)
+        x = self.drop(x)
         x = self.output(x)
         return x
 
@@ -44,6 +47,8 @@ model = NN().to(device)
 optimizer = optim.Adam(model.parameters(), LR)
 loss_fn = nn.CrossEntropyLoss()
 
+model.train()
+print('Training:')
 for epoch in range(N_EPOCHS):
     print(f"Epoch: {epoch + 1} / {N_EPOCHS}")
     for step, (input, target) in enumerate(train_data):
@@ -58,5 +63,13 @@ for epoch in range(N_EPOCHS):
         print(f"Step: {step}; Loss: {loss.item()}")
 
 
-
-
+model.eval()
+print("Testing:")
+for step, (input, target) in enumerate(test_data):
+    input, target = input.to(device), target.to(device)
+    accuracy = 0
+    output = model(input)
+    for values, label in zip(output,target):
+        if torch.argmax(values) == label:
+            accuracy += 1
+    print(f"Step: {step}; Accuracy: {accuracy / 10}%") 
