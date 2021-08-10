@@ -6,6 +6,8 @@ from torchvision.datasets import CIFAR10
 from torchvision.transforms import ToTensor
 from torch.utils.data import DataLoader
 from statistics import mean
+import os
+from progress.bar import Bar
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -32,7 +34,7 @@ class NN(nn.Module):
         self.conv5 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(64, 128, 3), nn.ReLU())
         self.conv6 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(128, 128, 3), nn.ReLU())
         self.pool3 = nn.MaxPool2d(2)
-        self.drop = nn.Dropout(0.1)
+        # self.drop = nn.Dropout(0.1)
         self.fc1 = nn.Sequential(nn.Linear(2048, 512), nn.ReLU())
         self.fc2 = nn.Sequential(nn.Linear(512, 128), nn.ReLU())
         self.fc3 = nn.Sequential(nn.Linear(128, 10))
@@ -53,7 +55,7 @@ class NN(nn.Module):
         x = self.pool3(x)
         
         x = torch.flatten(x, start_dim=1)
-        x = self.drop(x)
+        # x = self.drop(x)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
@@ -61,17 +63,18 @@ class NN(nn.Module):
 
 
 LR = 0.005
-N_EPOCHS = 10
+N_EPOCHS = 20
 
 model = NN().to(device)
 optimizer = optim.Adam(model.parameters(), LR)
 loss_fn = nn.CrossEntropyLoss()
 
-model.train()
-print('Training:')
 for epoch in range(N_EPOCHS):
+    model.train()
     print(f"Epoch: {epoch + 1} / {N_EPOCHS}")
+    bar = Bar("Training", max=len(train_data))
     for step, (input, target) in enumerate(train_data):
+        bar.next()
         input, target = input.to(device), target.to(device)
         output = model(input)
         output = output.to(device)
@@ -80,20 +83,18 @@ for epoch in range(N_EPOCHS):
         loss = loss.to(device)
         loss.backward()
         optimizer.step()
-        print(f"Step: {step}; Loss: {loss.item()}")
+    bar.finish()
+    print(f"Loss: {loss.item()}")
 
-
-model.eval()
-print("Testing:")
-accuracies = []
-for step, (input, target) in enumerate(test_data):
-    input, target = input.to(device), target.to(device)
-    accuracies.append(0)
-    output = model(input)
-    for values, label in zip(output,target):
-        if torch.argmax(values) == label:
-            accuracies[-1] += 1
-    print(f"Step: {step}; Accuracy: {accuracies[-1] / 10}%")
-
-avg_accuracy = mean(accuracies) / 10
-print(f"ACCURACY: {avg_accuracy}")
+    model.eval()
+    accuracies = []
+    for step, (input, target) in enumerate(test_data):
+        input, target = input.to(device), target.to(device)
+        accuracies.append(0)
+        output = model(input)
+        for values, label in zip(output,target):
+            if torch.argmax(values) == label:
+                accuracies[-1] += 1
+    avg_accuracy = mean(accuracies) / 10
+    print(f"ACCURACY: {avg_accuracy}")
+    print("-" * 20) 
