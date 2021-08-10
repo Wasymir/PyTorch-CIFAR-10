@@ -2,14 +2,18 @@ from numpy import mod
 import torch
 from torch import nn
 from torch import optim
+from torchvision import transforms
 from torchvision.datasets import CIFAR10
-from torchvision.transforms import ToTensor
+from torchvision.transforms import ToTensor, Compose, RandomHorizontalFlip, RandomInvert, RandomVerticalFlip
 from torch.utils.data import DataLoader
 from statistics import mean
-import os
 from progress.bar import Bar
 
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+
 
 train_dataset = CIFAR10(root="data", download=True, train=True, transform=ToTensor())
 
@@ -63,7 +67,7 @@ class NN(nn.Module):
 
 
 LR = 0.005
-N_EPOCHS = 20
+N_EPOCHS = 15
 
 model = NN().to(device)
 optimizer = optim.Adam(model.parameters(), LR)
@@ -85,16 +89,16 @@ for epoch in range(N_EPOCHS):
         optimizer.step()
     bar.finish()
     print(f"Loss: {loss.item()}")
-
-    model.eval()
-    accuracies = []
-    for step, (input, target) in enumerate(test_data):
-        input, target = input.to(device), target.to(device)
-        accuracies.append(0)
-        output = model(input)
-        for values, label in zip(output,target):
-            if torch.argmax(values) == label:
-                accuracies[-1] += 1
-    avg_accuracy = mean(accuracies) / 10
-    print(f"ACCURACY: {avg_accuracy}")
+    with torch.no_grad():
+        model.eval()
+        accuracies = []
+        for step, (input, target) in enumerate(test_data):
+            input, target = input.to(device), target.to(device)
+            accuracies.append(0)
+            output = model(input)
+            for values, label in zip(output,target):
+                if torch.argmax(values) == label:
+                    accuracies[-1] += 1
+        avg_accuracy = mean(accuracies) / 10
+        print(f"test accuracy: {avg_accuracy}")
     print("-" * 20) 
