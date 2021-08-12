@@ -12,10 +12,16 @@ from progress.bar import Bar
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
+AUGMENTATION_PROBABILITY = 0.2
+
+train_transform = Compose([
+    RandomHorizontalFlip(AUGMENTATION_PROBABILITY),
+    RandomVerticalFlip(AUGMENTATION_PROBABILITY),
+    ToTensor()
+])
 
 
-
-train_dataset = CIFAR10(root="data", download=True, train=True, transform=ToTensor())
+train_dataset = CIFAR10(root="data", download=True, train=True, transform=train_transform)
 
 test_dataset = CIFAR10(root="data", download=True, train=False, transform=ToTensor())
 
@@ -67,7 +73,7 @@ class NN(nn.Module):
 
 
 LR = 0.005
-N_EPOCHS = 15
+N_EPOCHS = 30
 
 model = NN().to(device)
 optimizer = optim.Adam(model.parameters(), LR)
