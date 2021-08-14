@@ -72,8 +72,8 @@ class NN(nn.Module):
         return x
 
 
-LR = 0.005
-N_EPOCHS = 30
+LR = 6e-4
+N_EPOCHS = 50
 
 model = NN().to(device)
 optimizer = optim.Adam(model.parameters(), LR)
