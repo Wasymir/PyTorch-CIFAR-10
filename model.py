@@ -36,7 +36,7 @@ class NN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(3, 32, 3), nn.ReLU())
-        self.conv2 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(32, 32, 3), nn.ReLU())
+        self.conv2 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(32, 32, 3), nn.ReLU(),)
         self.pool1 = nn.MaxPool2d(2)
         self.conv3 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(32, 64, 3), nn.ReLU())
         self.conv4 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(64, 64, 3), nn.ReLU())
@@ -44,10 +44,9 @@ class NN(nn.Module):
         self.conv5 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(64, 128, 3), nn.ReLU())
         self.conv6 = nn.Sequential(nn.ZeroPad2d(1), nn.Conv2d(128, 128, 3), nn.ReLU())
         self.pool3 = nn.MaxPool2d(2)
-        # self.drop = nn.Dropout(0.1)
         self.fc1 = nn.Sequential(nn.Linear(2048, 512), nn.ReLU())
-        self.fc2 = nn.Sequential(nn.Linear(512, 128), nn.ReLU())
-        self.fc3 = nn.Sequential(nn.Linear(128, 10))
+        self.drop = nn.Dropout(0.5)
+        self.fc2 = nn.Sequential(nn.Linear(512, 10))
 
 
     def forward(self, input):
@@ -65,10 +64,9 @@ class NN(nn.Module):
         x = self.pool3(x)
         
         x = torch.flatten(x, start_dim=1)
-        # x = self.drop(x)
         x = self.fc1(x)
+        x = self.drop(x)
         x = self.fc2(x)
-        x = self.fc3(x)
         return x
 
 
@@ -98,7 +96,7 @@ for epoch in range(N_EPOCHS):
     with torch.no_grad():
         model.eval()
         accuracies = []
-        for step, (input, target) in enumerate(test_data):
+        for input, target in test_data:
             input, target = input.to(device), target.to(device)
             accuracies.append(0)
             output = model(input)
